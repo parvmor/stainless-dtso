@@ -1,11 +1,9 @@
 import Expr._
 
-case class Register(name: String)
-
 sealed abstract class ArithExpr {
-  def eval(value: Register => Domain): Domain = this match {
+  def eval(value: Location => Domain): Domain = this match {
     case BigIntLiteral(i) => i
-    case Var(id) => value(id)
+    case Var(id) => value(MLocal(id))
     case UnaryMinus(e) => -e.eval(value)
     case Plus(e1, e2) => e1.eval(value) + e2.eval(value)
     case Minus(e1, e2) => e1.eval(value) - e2.eval(value)
@@ -33,7 +31,7 @@ case class Mod(e1: ArithExpr, e2: ArithExpr) extends ArithExpr
 case class Div(e1: ArithExpr, e2: ArithExpr) extends ArithExpr
 
 sealed abstract class BoolExpr {
-  def eval(value: Register => Domain): Boolean = this match {
+  def eval(value: Location => Domain): Boolean = this match {
     case BooleanLiteral(b) => b
     case Lt(e1, e2) => e1.eval(value) < e2.eval(value)
     case Leq(e1, e2) => e1.eval(value) <= e2.eval(value)
@@ -58,4 +56,11 @@ case class Or(e1: BoolExpr, e2: BoolExpr) extends BoolExpr
 
 object Expr {
   type Domain = BigInt
+  type ThreadId = BigInt
+
+  case class Register(tid: ThreadId, name: String)
+
+  sealed abstract class Location
+  case class MGlobal(addr: Domain) extends Location
+  case class MLocal(reg: Register) extends Location
 }

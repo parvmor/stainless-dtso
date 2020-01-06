@@ -6,17 +6,16 @@ import stainless.collection._
 import stainless.lang._
 
 case class Thread(
-  tid: ThreadId, regs: List[Register], init: InstLabel,
+  regs: List[Register],
   body: Map[InstLabel, Statement]
 )
 
 case class Program(
-   program: String, threads: Map[ThreadId, Thread],
+   threads: List[(ThreadId, Thread)],
    postCondition: BoolExpr
 )
 
 object Program {
-  type ThreadId = BigInt
   type InstLabel = String
 
   sealed abstract class Statement
