@@ -13,7 +13,7 @@ case class TotalStoreOrder(program: Program) {
       (0, Thread(
         regs = List(Register(0, "a")),
         body = Map(
-          ("init", compute(Register(0, "a"), BigIntLiteral(5), "exit"))
+          ("init", compute(Register(0, "a"), BigIntLiteral(500), "exit"))
         )
       ))
     )
@@ -26,73 +26,77 @@ case class TotalStoreOrder(program: Program) {
   def InitState: State =
     State(allInitInstLabel, allLocationZero, allBufferEmpty)
 
-  def sInst(tid: ThreadId, s: State): State = {
-    program.threads.find(x => x._1 == tid) match {
-      case None() => s
-      case Some(thrd) => thrd._2.body.get(s.pc(tid)) match {
-        case None() => s
-        case Some(inst) => inst match {
-          case noop(next) => {
-            def newPc(tid0: ThreadId): InstLabel = {
-              if (tid0 == tid) next
-              else s.pc(tid0)
-            }
-            s.copy(pc = newPc)
-          }
-          case compute(reg, expr, next) => {
-            def newPc(tid0: ThreadId): InstLabel = {
-              if (tid0 == tid) next
-              else s.pc(tid0)
-            }
-            def newValue(loc: Location): Domain = loc match {
-              case MLocal(reg0) if reg0 == reg => expr.eval(s.value)
-              case _ => s.value(loc)
-            }
-            s.copy(pc = newPc)
-          }
-          case _ => s
-        }
-      }
-    }
-  }
+  // def sInst(tid: ThreadId, s: State): State = {
+  //   program.threads.find(x => x._1 == tid) match {
+  //     case None() => s
+  //     case Some(thrd) => thrd._2.body.get(s.pc(tid)) match {
+  //       case None() => s
+  //       case Some(inst) => inst match {
+  //         case noop(next) => {
+  //           def newPc(tid0: ThreadId): InstLabel = {
+  //             if (tid0 == tid) next
+  //             else s.pc(tid0)
+  //           }
+  //           s.copy(pc = newPc)
+  //         }
+  //         case compute(reg, expr, next) => {
+  //           def newPc(tid0: ThreadId): InstLabel = {
+  //             if (tid0 == tid) next
+  //             else s.pc(tid0)
+  //           }
+  //           def newValue(loc: Location): Domain = loc match {
+  //             case MLocal(reg0) if reg0 == reg => expr.eval(s.value)
+  //             case _ => s.value(loc)
+  //           }
+  //           s.copy(pc = newPc, value = newValue)
+  //         }
+  //         case _ => s
+  //       }
+  //     }
+  //   }
+  // }
 
-  def sStore(tid: ThreadId, s: State): State = {
-    s.buffer(tid).buf match {
-      case Nil() => s
-      case (addr, value) :: rest => {
-        def newValue(loc: Location): Domain = loc match {
-          case MGlobal(addr0) if addr0 == addr => value
-          case _ => s.value(loc)
-        }
-        def newBuffer(tid0: ThreadId): StoreBuffer = {
-          if (tid0 == tid) StoreBuffer(rest)
-          else s.buffer(tid0)
-        }
-        s.copy(value = newValue, buffer = newBuffer)
-      }
-    }
-  }
+  // def sStore(tid: ThreadId, s: State): State = {
+  //   s.buffer(tid).buf match {
+  //     case Nil() => s
+  //     case (addr, value) :: rest => {
+  //       def newValue(loc: Location): Domain = loc match {
+  //         case MGlobal(addr0) if addr0 == addr => value
+  //         case _ => s.value(loc)
+  //       }
+  //       def newBuffer(tid0: ThreadId): StoreBuffer = {
+  //         if (tid0 == tid) StoreBuffer(rest)
+  //         else s.buffer(tid0)
+  //       }
+  //       s.copy(value = newValue, buffer = newBuffer)
+  //     }
+  //   }
+  // }
 
-  def simulate(s: State, schedule: Schedule): State = {
-    schedule match {
-      case Nil() => s
-      case AInst(tid) :: rest => simulate(sInst(tid, s), rest)
-      case AStore(tid) :: rest => simulate(sStore(tid, s), rest)
-    }
-  }
+  // def simulate(s: State, schedule: Schedule): State = {
+  //   schedule match {
+  //     case Nil() => s
+  //     case AInst(tid) :: rest => simulate(sInst(tid, s), rest)
+  //     case AStore(tid) :: rest => simulate(sStore(tid, s), rest)
+  //   }
+  // }
 
-  def run(s: State, schedule: Schedule): State = {
+  def run(program0: Program, s: State, schedule: Schedule): State = {
     require {
-      s == InitState &&
-      schedule.forall(x => x match {
-        case AInst(tid) => tid == 0
-        case AStore(tid) => tid == 0
-      })
+      s == InitState
+      // schedule.length > 0 &&
+      // program0 == program &&
+      // schedule.forall(x => x match {
+      //   case AInst(tid) => tid == 0
+      //   case AStore(tid) => tid == 0
+      // })
     }
-    simulate(s, schedule)
+    s
+    // simulate(s, schedule)
   } ensuring { res =>
-    program.threads.exists(x => res.pc(x._1) != "exit") ||
-    program.postCondition.eval(res.value)
+    // res == InitState &&
+    // program0.postCondition.eval(res.value) &&
+    false
   }
 }
 
