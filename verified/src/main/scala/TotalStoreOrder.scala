@@ -8,12 +8,12 @@ import stainless.lang._
 
 case class TotalStoreOrder(program: Program) {
   require {
-    program.postCondition == Lt(BigIntLiteral(100), Var(Register(0, "a"))) &&
+    program.postCondition == Lt(BigIntLiteral(100), Var(Register(BigInt(0), "a"))) &&
     program.threads == List(
-      (0, Thread(
-        regs = List(Register(0, "a")),
+      (BigInt(0), Thread(
+        regs = List(Register(BigInt(0), "a")),
         body = Map(
-          ("init", compute(Register(0, "a"), BigIntLiteral(5), "exit"))
+          ("init", compute(Register(BigInt(0), "a"), BigIntLiteral(5), "exit"))
         )
       ))
     )
